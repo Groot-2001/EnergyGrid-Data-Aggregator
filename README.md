@@ -1,54 +1,112 @@
-# EnergyGrid Mock API
+# EnergyGrid Data Aggregator
 
-This is the mock backend server for the EnergyGrid Data Aggregator coding assignment.
+This project is a client application that fetches telemetry data for 500 solar inverters from a mock EnergyGrid API while respecting strict API constraints like rate limiting, batching, and request signing.
+
+---
+
+## Problem Statement
+
+The EnergyGrid API enforces the following rules:
+
+- **Rate Limit:** 1 request per second (strict)
+- **Batch Size:** Maximum 10 device serial numbers per request
+- **Security:** Each request must include a valid MD5-based signature
+- **Total Devices:** 500 solar inverters
+
+The goal is to fetch data for all devices **reliably and safely**, without violating these constraints, and aggregate the results into a single report.
+
+---
+
+## Approach
+
+1. **Serial Number Generation**
+   - Generated 500 dummy serial numbers:  
+     `SN-000` to `SN-499`
+
+2. **Batching**
+   - Split the 500 serial numbers into batches of 10  
+   - Total API calls = 50
+
+3. **Rate Limiting**
+   - Ensured only **one request is sent per second**
+   - Requests are sent sequentially to avoid `429 Too Many Requests`
+
+4. **Request Signing**
+   - For every request:
+     - Generated a timestamp
+     - Created a signature using:  
+       `MD5(url + token + timestamp)`
+     - Sent both as request headers
+
+5. **Error Handling & Retries**
+   - If a request fails (e.g. `429` or network issue):
+     - Retry up to 3 times with a delay
+     - Prevents crashes and infinite retries
+
+6. **Aggregation**
+   - Combined results from all batches into a single array
+
+---
+
+## Project Structure
+
+project-root/
+├── mock-api/              ← interviewer code (server)
+└── energygrid-client/     ← my code (client)
+
+energygrid-client/
+│
+├── src/
+│ ├── apiClient.js # Handles signed API requests
+│ ├── rateLimiter.js # Ensures 1 request per second
+│ ├── aggregator.js # Batching, retries, aggregation
+│ └── index.js # Application entry point
+│
+└── package.json
+
+
+---
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- npm (Node Package Manager)
+- Node.js v14 or higher
+- npm
+- Mock API server running locally
 
-## Setup and Run
+---
 
-1.  **Navigate to the project directory:**
-    ```bash
-    cd EnergyGrid-Data-Aggregator
-    ```
+## How to Run
 
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+### 1. Start the Mock API Server
 
-3.  **Start the server:**
-    ```bash
-    npm start
-    ```
-    Or directly:
-    ```bash
-    node server.js
-    ```
+```bash
+cd mock-api
+npm install
+npm start
+```
 
-4.  **Verify:**
-    You should see the following output:
-    ```
-    ⚡ EnergyGrid Mock API running on port 3000
-       Constraints: 1 req/sec, Max 10 items/batch
-    ```
-    The server is now listening at `http://localhost:3000`.
+### You should see below in terminal-1
+```
+⚡ EnergyGrid Mock API running on port 3000
+Constraints: 1 req/sec, Max 10 items/batch
+```
 
-## API Details
+### 2. Run the Client Application
 
--   **Base URL:** `http://localhost:3000`
--   **Endpoint:** `POST /device/real/query`
--   **Auth Token:** `interview_token_123`
+### In a new terminal:
 
-### Security Headers Required
-Every request must include:
-- `timestamp`: Current time in milliseconds.
-- `signature`: `MD5( URL + Token + timestamp )`
+```
+cd energygrid-client
+npm start
+```
 
-### Constraints
-- **Rate Limit:** 1 request per second.
-- **Batch Size:** Max 10 serial numbers per request.
+### Expected output:
+```
+Request 1/50
+Request 2/50
+...
+Request 50/50
+DONE
+Total devices fetched: 500
+```
 
-See `instructions.md` for full details.
