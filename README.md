@@ -49,7 +49,7 @@ The goal is to fetch data for all devices **reliably and safely**, without viola
 ---
 
 ## Project Structure
-
+```
 project-root/
 ├── mock-api/              ← interviewer code (server)
 └── energygrid-client/     ← my code (client)
@@ -63,7 +63,7 @@ energygrid-client/
 │ └── index.js # Application entry point
 │
 └── package.json
-
+```
 
 ---
 
